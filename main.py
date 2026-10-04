@@ -2,6 +2,10 @@ import sys
 
 # A separate child process runs downloads so cancellation never freezes the window.
 if '--engine' in sys.argv:
+    # Keep names and the parent/child protocol identical on every Windows locale.
+    for stream in (sys.stdout, sys.stderr):
+        if stream is not None and hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8', errors='replace')
     import yt_dlp
     yt_dlp.main(sys.argv[sys.argv.index('--engine') + 1:])
     raise SystemExit
@@ -150,6 +154,8 @@ class Engine(QThread):
                     raise OSError(errno.ENOSPC, 'No hay espacio libre suficiente para empezar la descarga.')
             kwargs = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {'start_new_session': True}
             env = os.environ.copy()
+            env['PYTHONUTF8'] = '1'
+            env['PYTHONIOENCODING'] = 'utf-8'
             env['PATH'] = str(binary_directory()) + os.pathsep + env.get('PATH', '')
             self.process = subprocess.Popen(engine_command() + self.args, env=env, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, **kwargs)
@@ -845,7 +851,8 @@ class Window(QMainWindow):
         if not new_items:
             self.progress.setRange(0, 100)
             self.progress.setValue(0)
-            self.status.setText('No hay archivos nuevos en la parte revisada de esta playlist para el formato elegido. La cola anterior se conserva.')
+            self.status.setText(('Se alcanzó el límite de revisión de 200.000 elementos. ' if info.get('scan_limit_reached') else '') +
+                                'No hay archivos nuevos en la parte revisada para este formato. La cola anterior se conserva.')
             self.controls(False)
             return
         self.source_url = self.url.text()
@@ -855,7 +862,8 @@ class Window(QMainWindow):
         self.persist()
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
-        self.status.setText(f'{len(self.items)} preparados. {info.get("skipped", 0)} ya estaban en la carpeta. Vuelve a procesar el enlace para buscar el siguiente lote.')
+        self.status.setText(f'{len(self.items)} preparados. {info.get("skipped", 0)} ya estaban en la carpeta. ' +
+                            ('Se alcanzó el límite de revisión de 200.000 elementos.' if info.get("scan_limit_reached") else 'Vuelve a procesar el enlace para buscar el siguiente lote.'))
         self.controls(False)
 
     def inspect_failed(self, message):
