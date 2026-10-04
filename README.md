@@ -8,6 +8,8 @@ Descarga **Bajada-Setup.exe** desde [Releases](https://github.com/luizgnz/bajada
 
 El instalador incluye Python, Qt, yt-dlp, FFmpeg, FFprobe y Deno: no hace falta instalar herramientas aparte. La versión de prueba no tiene firma digital; Windows puede mostrar «editor desconocido».
 
+El instalador crea `Videos\Bajada` dentro de tu carpeta de usuario y conserva esa carpeta al desinstalar. Si ejecutas la app sin instalador, la carpeta de destino se crea antes de iniciar la descarga. El botón **Abrir carpeta** también la crea si todavía no existe.
+
 ## Uso
 
 1. Elige la carpeta y el formato. Al abrir, viene seleccionado audio MP3, calidad media de 192 kbps.
