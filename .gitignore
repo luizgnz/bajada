@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+build/
+dist/
+build-tools/
+vendor/
+*.spec
+*.log
+queue*.json
+*.sqlite3*
+validation*.json
+.DS_Store
