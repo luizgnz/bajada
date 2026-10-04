@@ -481,7 +481,7 @@ class Window(QMainWindow):
         self.retry.setToolTip('Reintenta solo los fallidos seleccionados; conserva los archivos completados.')
         self.retry.clicked.connect(self.retry_failed)
         self.open_folder = QPushButton('Abrir carpeta')
-        self.open_folder.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(self.folder.text())))
+        self.open_folder.clicked.connect(self.open_download_folder)
         footer = QHBoxLayout()
         for button in (self.pause, self.cancel, self.retry, self.open_folder):
             footer.addWidget(button, 1)
@@ -764,6 +764,17 @@ class Window(QMainWindow):
             self.persist()
         except ValueError:
             QMessageBox.information(self, 'Elegir videos', 'Escribe números dentro de la lista, por ejemplo: 1-50, 80.')
+
+    def open_download_folder(self):
+        try:
+            folder = Path(self.folder.text()).expanduser().resolve()
+            folder.mkdir(parents=True, exist_ok=True)
+            if os.name == 'nt':
+                os.startfile(str(folder))
+            elif not QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder))):
+                raise OSError('El sistema no pudo abrir la carpeta.')
+        except (OSError, ValueError) as exc:
+            self.show_error(f'No se pudo abrir la carpeta de descargas: {exc}')
 
     def choose_folder(self):
         folder = QFileDialog.getExistingDirectory(self, 'Dónde guardar', self.folder.text())

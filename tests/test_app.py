@@ -22,6 +22,35 @@ def wait_for(app, predicate):
     assert predicate()
 
 
+def test_open_folder_creates_missing_destination(app, tmp_path, monkeypatch):
+    window = Window(tmp_path / 'queue.json')
+    folder = tmp_path / 'Música nueva' / 'Bajada'
+    window.folder.setText(str(folder))
+    opened = []
+    if os.name == 'nt':
+        monkeypatch.setattr(main.os, 'startfile', opened.append)
+    else:
+        monkeypatch.setattr(main.QDesktopServices, 'openUrl', lambda url: opened.append(url.toLocalFile()) or True)
+    window.open_folder.click()
+    assert folder.is_dir()
+    assert opened == [str(folder.resolve())]
+    window.close()
+
+
+def test_open_folder_reports_invalid_destination(app, tmp_path, monkeypatch):
+    window = Window(tmp_path / 'queue.json')
+    folder = tmp_path / 'file'
+    folder.write_text('existing file')
+    window.folder.setText(str(folder))
+    errors = []
+    monkeypatch.setattr(window, 'show_error', errors.append)
+    window.open_folder.click()
+    assert len(errors) == 1
+    assert 'No se pudo abrir la carpeta' in errors[0]
+    assert folder.read_text() == 'existing file'
+    window.close()
+
+
 def test_large_list_selection_and_restoration(app, tmp_path):
     window = Window(tmp_path / 'queue.json')
     window.inspected({'_type': 'playlist', 'entries': [{'id': str(i), 'title': f'Video {i}'} for i in range(100)]})
@@ -48,6 +77,22 @@ def test_worker_progress_and_final_file(app, tmp_path, monkeypatch):
     worker.start()
     wait_for(app, lambda: not worker.isRunning())
     assert values == [70]
+    assert results == [str(target)]
+
+
+def test_download_creates_destination_without_installer(app, tmp_path, monkeypatch):
+    folder = tmp_path / 'Videos nuevos' / 'Bajada'
+    target = folder / 'completed.mp4'
+    script = "from pathlib import Path; p = Path(" + repr(str(target)) + "); assert p.parent.is_dir(); p.write_bytes(b'test'); print('DF_FILE:' + str(p))"
+    monkeypatch.setattr(main, 'engine_command', lambda: [sys.executable, '-c', script])
+    worker = Engine(['-P', str(folder)])
+    results, errors = [], []
+    worker.result.connect(results.append)
+    worker.problem.connect(errors.append)
+    worker.start()
+    wait_for(app, lambda: not worker.isRunning())
+    assert not errors
+    assert target.read_bytes() == b'test'
     assert results == [str(target)]
 
 
