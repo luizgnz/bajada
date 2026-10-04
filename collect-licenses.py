@@ -13,3 +13,14 @@ for dist in metadata.distributions():
                 target=root/name/source.name
                 target.parent.mkdir(parents=True,exist_ok=True)
                 shutil.copy2(source,target)
+
+# CPython is bundled by PyInstaller rather than a pip distribution.
+for name in ('LICENSE.txt', 'LICENSE'):
+    source=Path(sys.base_prefix)/name
+    if source.is_file():
+        target=root/'Python'/name
+        target.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(source,target)
+        break
+else:
+    raise SystemExit('No se encontró la licencia de Python para incluirla en el instalador.')
