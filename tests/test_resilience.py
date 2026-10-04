@@ -222,3 +222,61 @@ def test_preparing_1000_keeps_payload_small_and_gui_can_continue(app,tmp_path,mo
     assert len(result[0]['entries'])==1000
     assert all(set(i)=={'id','title'} for i in result[0]['entries'])
     assert len(json.dumps(result[0]))<100000
+
+
+def test_live_filter_sort_scroll_and_selection_affect_next_download(app,tmp_path,monkeypatch):
+    from PySide6.QtWidgets import QAbstractSlider
+    destination=tmp_path/'downloads';destination.mkdir()
+    ready=tmp_path/'ready';release=tmp_path/'release'
+    source=tmp_path/'download_fixture.py'
+    source.write_text('''import sys,time
+from pathlib import Path
+from urllib.parse import urlparse,parse_qs
+identity=parse_qs(urlparse(sys.argv[-1]).query)['v'][0]
+root=Path(sys.argv[sys.argv.index('-P')+1])
+if identity=='0':
+ Path('''+repr(str(ready))+''').write_text('ready')
+ while not Path('''+repr(str(release))+''').exists():time.sleep(.02)
+file=root/('Tema '+identity+'.mp3');file.write_bytes(b'audio')
+print('DF_FILE:'+str(file),flush=True)
+''',encoding='utf-8')
+    monkeypatch.setattr(main,'engine_command',lambda:[sys.executable,str(source)])
+    monkeypatch.setattr(main.shutil,'which',lambda name:'bundled-ffmpeg')
+    window=Window(tmp_path/'queue.json');window.folder.setText(str(destination))
+    window.inspected({'_type':'playlist','entries':entries(25)})
+    window.items[1]['status']='done';window.render();window.show();app.processEvents()
+    window.start_queue();pump(app,ready.exists)
+    try:
+        assert window.running and window.current is window.items[0]
+        for control in (window.table,window.search,window.url,window.select_all_check,window.range_input,window.range_button,window.open_folder):
+            assert control.isEnabled()
+        for control in (window.analyze,window.mode,window.format,window.quality,window.change_folder,window.download,window.retry):
+            assert not control.isEnabled()
+        window.table.sortItems(2,Qt.DescendingOrder)
+        window.search.setText('Tema 24');app.processEvents()
+        visible=[r for r in range(window.table.rowCount()) if not window.table.isRowHidden(r)]
+        assert len(visible)==1 and window.table.item(visible[0],0).data(Qt.UserRole)==24
+        window.search.clear();app.processEvents()
+        scroll=window.table.verticalScrollBar();scroll.triggerAction(QAbstractSlider.SliderToMaximum)
+        assert scroll.value()==scroll.maximum() and scroll.maximum()>0
+        window.select_all_check.click();assert not any(i['selected'] for i in window.items)
+        assert window.items[0]['status']=='downloading' and window.items[1]['status']=='done'
+        window.range_input.setText('1,3,25');window.range_button.click()
+        row=next(r for r in range(25) if window.table.item(r,0).data(Qt.UserRole)==24)
+        window.table.item(row,0).setCheckState(Qt.Unchecked)
+        assert [i for i,item in enumerate(window.items) if item['selected']]==[0,2]
+        saved=load_state(tmp_path/'queue.json')
+        assert not saved['items'][24]['selected']
+        # Pasting the next link cannot replace an active queue even with Enter.
+        window.url.setText('https://youtu.be/next');current_items=window.items
+        window.inspect();assert window.items is current_items
+        release.write_text('go');pump(app,lambda:not window.running and window.worker is None)
+        assert [i for i,item in enumerate(window.items) if item['status']=='done']==[0,1,2]
+        assert window.items[24]['status']=='pending'
+        assert len(list(destination.glob('*.mp3')))==2
+        assert all(control.isEnabled() for control in (window.table,window.mode,window.format,window.change_folder))
+    finally:
+        release.write_text('go')
+        if window.worker:
+            window.cancel_queue();pump(app,lambda:window.worker is None)
+        window.close()

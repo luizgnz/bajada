@@ -17,6 +17,8 @@ El instalador incluye Python, Qt, yt-dlp, FFmpeg, FFprobe y Deno: no hace falta 
 
 Audio: MP3, M4A, AAC y FLAC. Video: MP4, MKV, WebM, MOV y AVI. Convertir a MOV/AVI puede tardar más. La calidad elegida es un máximo; la fuente determina la calidad realmente disponible. FLAC conserva el audio original sin pérdidas adicionales, pero no mejora una fuente comprimida.
 
+Mientras descarga puedes buscar, ordenar, desplazarte, abrir la carpeta y cambiar la selección individual, por rango o con el check general. La cola vuelve a consultar la selección antes de empezar cada archivo: desmarcar un pendiente lo omite y volver a marcarlo lo incluye. El archivo que ya se está descargando termina; para interrumpirlo usa **Detener descarga**. Formato, calidad, carpeta y Procesar quedan bloqueados hasta que termine o se detenga la operación. Puedes pegar otro enlace para prepararlo.
+
 **Pausar cola** termina el elemento actual y deja los siguientes pendientes. **Detener descarga** cancela el proceso actual y conserva los archivos terminados. **Reintentar fallidos** procesa únicamente los fallidos seleccionados; queda deshabilitado si no hay ninguno.
 
 La ventana tiene tamaño mediano fijo, minimizar y cerrar. Se ajusta al espacio disponible al cambiar de monitor y no permite maximizar.

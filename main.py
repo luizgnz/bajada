@@ -431,7 +431,7 @@ class Window(QMainWindow):
         self.select_all_check.setMinimumWidth(180)
         self.select_all_check.setTristate(True)
         self.select_all_check.clicked.connect(lambda checked: self.select_all(checked))
-        self.select_all_check.setToolTip('Marca toda la lista o desmárcala. Un guion indica una selección parcial.')
+        self.select_all_check.setToolTip('Marca o desmarca la lista, incluso durante la descarga. Desmarcar omite los pendientes; el archivo actual termina. Un guion indica una selección parcial.')
         self.range_input = QLineEdit()
         self.range_input.setFixedWidth(210)
         self.range_input.setPlaceholderText('Ejemplo: 1-50, 80')
@@ -647,6 +647,7 @@ class Window(QMainWindow):
             checkbox = QTableWidgetItem()
             checkbox.setData(Qt.UserRole, index)
             checkbox.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | Qt.ItemIsSelectable)
+            checkbox.setToolTip('Desmarcar omite este elemento si aún está pendiente. No cancela el archivo que ya se está descargando.')
             checkbox.setCheckState(Qt.Checked if item.get('selected', True) else Qt.Unchecked)
             number = QTableWidgetItem()
             number.setData(Qt.DisplayRole, index + 1)
@@ -771,9 +772,12 @@ class Window(QMainWindow):
             self.persist()
 
     def controls(self, busy):
-        for widget in [self.url, self.analyze, self.mode, self.format, self.change_folder,
-                       self.download, self.retry, self.table, self.select_all_check, self.range_input, self.range_button]:
+        # Browsing and live selection stay usable; next_item reads selection afresh.
+        for widget in [self.analyze, self.mode, self.format, self.change_folder, self.download, self.retry]:
             widget.setEnabled(not busy)
+        for widget in (self.table, self.search, self.select_all_check, self.range_input, self.range_button, self.open_folder):
+            widget.setEnabled(True)
+        self.url.setEnabled(not busy or self.running)
         self.quality.setEnabled(not busy)
         self.pause.setEnabled(busy and self.running)
         self.cancel.setEnabled(busy)
@@ -823,7 +827,7 @@ class Window(QMainWindow):
         self.status.setText('Se produjo un error. La cola se conservó; puedes volver a intentarlo.')
 
     def inspect(self):
-        if self.worker:
+        if self.worker or self.running:
             return
         candidate = self.url.text().strip() or QApplication.clipboard().text().strip()
         try:
