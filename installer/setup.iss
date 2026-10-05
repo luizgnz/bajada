@@ -20,7 +20,7 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 [Tasks]
 Name: "desktopicon"; Description: "Crear un acceso directo en el escritorio"; Flags: checkedonce
 [Dirs]
-Name: "{userprofile}\Videos\Bajada"; Flags: uninsneveruninstall
+Name: "{%USERPROFILE}\Videos\Bajada"; Flags: uninsneveruninstall
 [Files]
 Source: "..\dist\DescargaFacil\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 [Icons]
