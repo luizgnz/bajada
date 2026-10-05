@@ -80,6 +80,27 @@ def test_worker_progress_and_final_file(app, tmp_path, monkeypatch):
     assert results == [str(target)]
 
 
+def test_worker_does_not_inherit_detached_console_input(app, tmp_path, monkeypatch):
+    target = tmp_path / 'completed.mp4'
+    target.write_bytes(b'test')
+    script = "print('DF_FILE:' + " + repr(str(target)) + ')'
+    monkeypatch.setattr(main, 'engine_command', lambda: [sys.executable, '-c', script])
+    original_popen = main.subprocess.Popen
+    def detached_console_popen(*args, **kwargs):
+        if kwargs.get('stdin') is None:
+            raise OSError(50, 'The request is not supported')
+        return original_popen(*args, **kwargs)
+    monkeypatch.setattr(main.subprocess, 'Popen', detached_console_popen)
+    worker = Engine([])
+    results, errors = [], []
+    worker.result.connect(results.append)
+    worker.problem.connect(errors.append)
+    worker.start()
+    wait_for(app, lambda: not worker.isRunning())
+    assert not errors
+    assert results == [str(target)]
+
+
 def test_download_creates_destination_without_installer(app, tmp_path, monkeypatch):
     folder = tmp_path / 'Videos nuevos' / 'Bajada'
     target = folder / 'completed.mp4'

@@ -93,7 +93,7 @@ class Engine(QThread):
             try:
                 if os.name == 'nt':
                     subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
-                                   capture_output=True, timeout=10,
+                                   stdin=subprocess.DEVNULL, capture_output=True, timeout=10,
                                    creationflags=subprocess.CREATE_NO_WINDOW)
                 else:
                     os.killpg(process.pid, signal.SIGTERM)
@@ -157,7 +157,8 @@ class Engine(QThread):
             env['PYTHONUTF8'] = '1'
             env['PYTHONIOENCODING'] = 'utf-8'
             env['PATH'] = str(binary_directory()) + os.pathsep + env.get('PATH', '')
-            self.process = subprocess.Popen(engine_command() + self.args, env=env, stdout=subprocess.PIPE,
+            # The frozen GUI detaches its console; inherited stdin may be an invalid handle.
+            self.process = subprocess.Popen(engine_command() + self.args, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, **kwargs)
             if self.stopped:
                 self.stop()
