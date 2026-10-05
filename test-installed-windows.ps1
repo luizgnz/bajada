@@ -34,7 +34,7 @@ try {
     if ($Check.ExitCode -ne 0) { throw 'El instalador publicado tiene componentes defectuosos.' }
 } finally { $env:PATH=$SavedPath }
 Invoke-Install $Installer 'upgrade-install'
-& "$PSScriptRoot/validate-windows.ps1" -AppDirectory $Destination -ReportDirectory "$Reports/integration" -YoutubeUrl 'https://www.youtube.com/watch?v=BaW_jenozKc'
+& "$PSScriptRoot/validate-windows.ps1" -AppDirectory $Destination -ReportDirectory "$Reports/integration" -YoutubeUrl 'https://www.youtube.com/watch?v=jNQXAC9IVRw'
 # A removed component must be detected and restored by reinstalling.
 $Ffmpeg = Join-Path $Destination '_internal/vendor/ffmpeg.exe'
 Remove-Item $Ffmpeg

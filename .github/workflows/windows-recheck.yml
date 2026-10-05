@@ -1,0 +1,35 @@
+name: Validar instalador Windows existente
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: ID de la ejecución que creó el artefacto Bajada-Windows
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  installed:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Bajada-Windows
+          path: candidate
+          run-id: ${{ inputs.build_run }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Instalación, actualización, conversión y recuperación
+        shell: pwsh
+        run: ./test-installed-windows.ps1 -Installer "$PWD/candidate/Bajada-Setup.exe"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installed-${{ matrix.os }}
+          path: validation-results/**
