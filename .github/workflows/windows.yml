@@ -1,4 +1,4 @@
-name: Crear instalador Windows
+name: Crear y validar instalador Windows
 on:
   workflow_dispatch:
   push:
@@ -7,8 +7,8 @@ permissions:
   contents: read
 jobs:
   build:
-    runs-on: windows-latest
-    timeout-minutes: 35
+    runs-on: windows-2022
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,3 +23,32 @@ jobs:
           path: dist/installer/*
           if-no-files-found: error
           retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-validation
+          path: |
+            dist/DescargaFacil/validation/*
+            build-tools/installed-test/validation/*
+  installed:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Bajada-Windows
+          path: candidate
+      - name: Instalación, actualización, conversión y recuperación
+        shell: pwsh
+        run: ./test-installed-windows.ps1 -Installer "$PWD/candidate/Bajada-Setup.exe"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installed-${{ matrix.os }}
+          path: validation-results/**

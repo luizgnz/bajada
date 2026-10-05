@@ -13,7 +13,7 @@ $Headers = @{ 'User-Agent' = 'Bajada-Build' }
 $FfmpegRelease = Invoke-RestMethod 'https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest' -Headers $Headers
 $FfmpegAsset = $FfmpegRelease.assets | Where-Object { $_.name -eq 'ffmpeg-n8.1-latest-win64-lgpl-shared-8.1.zip' } | Select-Object -First 1
 if (-not $FfmpegAsset) { throw 'No se encontró la compilación LGPL de FFmpeg esperada.' }
-Invoke-WebRequest $FfmpegAsset.browser_download_url -OutFile build-tools/ffmpeg.zip
+Invoke-WebRequest -MaximumRetryCount 3 -TimeoutSec 120 $FfmpegAsset.browser_download_url -OutFile build-tools/ffmpeg.zip
 Expand-Archive build-tools/ffmpeg.zip build-tools/ffmpeg -Force
 $FfmpegFolder = (Get-ChildItem build-tools/ffmpeg -Directory | Select-Object -First 1).FullName
 Copy-Item "$FfmpegFolder\bin\*" vendor -Recurse -Force
@@ -33,13 +33,13 @@ if (($FfmpegVersion -join ' ') -match '-g([0-9a-f]{7,40})') { $FfmpegSourceRevis
   "FFmpeg build recipes archive: https://github.com/BtbN/FFmpeg-Builds/archive/$BuildRevision.tar.gz") | Set-Content vendor/component-sources.txt -Encoding utf8
 $DenoRelease = Invoke-RestMethod 'https://api.github.com/repos/denoland/deno/releases/latest' -Headers $Headers
 $DenoAsset = $DenoRelease.assets | Where-Object { $_.name -eq 'deno-x86_64-pc-windows-msvc.zip' } | Select-Object -First 1
-Invoke-WebRequest $DenoAsset.browser_download_url -OutFile build-tools/deno.zip
+Invoke-WebRequest -MaximumRetryCount 3 -TimeoutSec 120 $DenoAsset.browser_download_url -OutFile build-tools/deno.zip
 Expand-Archive build-tools/deno.zip vendor -Force
-Invoke-WebRequest "https://raw.githubusercontent.com/denoland/deno/$($DenoRelease.tag_name)/LICENSE.md" -OutFile vendor/DENO-LICENSE.md
+Invoke-WebRequest -MaximumRetryCount 3 -TimeoutSec 120 "https://raw.githubusercontent.com/denoland/deno/$($DenoRelease.tag_name)/LICENSE.md" -OutFile vendor/DENO-LICENSE.md
 "Deno source: https://github.com/denoland/deno/archive/refs/tags/$($DenoRelease.tag_name).tar.gz" | Add-Content vendor/component-sources.txt -Encoding utf8
 New-Item -ItemType Directory -Force licenses | Out-Null
-Invoke-WebRequest 'https://www.gnu.org/licenses/lgpl-3.0.txt' -OutFile licenses/LGPL-3.0.txt
-Invoke-WebRequest 'https://www.gnu.org/licenses/gpl-3.0.txt' -OutFile licenses/GPL-3.0.txt
+Invoke-WebRequest -MaximumRetryCount 3 -TimeoutSec 120 'https://www.gnu.org/licenses/lgpl-3.0.txt' -OutFile licenses/LGPL-3.0.txt
+Invoke-WebRequest -MaximumRetryCount 3 -TimeoutSec 120 'https://www.gnu.org/licenses/gpl-3.0.txt' -OutFile licenses/GPL-3.0.txt
 & $Python collect-licenses.py licenses
 if ($LASTEXITCODE -ne 0) { throw 'No se pudieron preparar los avisos de los componentes.' }
 & $Python -m PyInstaller --noconfirm --clean --onedir --console --name DescargaFacil --icon assets/bajada.ico --collect-all yt_dlp --collect-all yt_dlp_ejs --add-data 'vendor;vendor' --add-data 'licenses;licenses' --add-data 'THIRD-PARTY.md;.' --add-data 'LICENSE;.' main.py

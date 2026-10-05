@@ -289,7 +289,10 @@ class Engine(QThread):
                 self.result.emit(filename)
         except Exception as exc:
             self.fatal = isinstance(exc, OSError) and exc.errno in (errno.ENOSPC, errno.EACCES, errno.EROFS, errno.ENOENT)
-            if isinstance(exc, sqlite3.Error):
+            if getattr(exc, 'winerror', None) == 50:
+                message = ('Windows no pudo iniciar el descargador integrado. Reinstala la versión más reciente de Bajada. '
+                           'No hace falta instalar yt-dlp ni FFmpeg por separado. Detalle: ' + str(exc))
+            elif isinstance(exc, sqlite3.Error):
                 message = 'No se pudo leer o guardar el índice de esta carpeta. Comprueba sus permisos o elige otra ubicación.'
             elif isinstance(exc, PermissionError):
                 message = 'No hay permiso para guardar en esa carpeta. Elige otra ubicación.'
@@ -1025,6 +1028,12 @@ if __name__ == '__main__':
     from diagnostics import install_diagnostics
     install_diagnostics()
     app = QApplication(sys.argv)
+    if '--integration-test' in sys.argv:
+        from package_validation import run
+        report = sys.argv[sys.argv.index('--report') + 1]
+        fixture = sys.argv[sys.argv.index('--fixture') + 1]
+        youtube = sys.argv[sys.argv.index('--youtube-test') + 1] if '--youtube-test' in sys.argv else None
+        raise SystemExit(run(sys.modules[__name__], app, report, fixture, youtube))
     if '--smoke-test' in sys.argv:
         import tempfile
         with tempfile.TemporaryDirectory() as folder:

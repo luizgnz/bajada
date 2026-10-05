@@ -6,7 +6,7 @@ Aplicación sencilla en español para descargar videos, música y playlists de Y
 
 Descarga **Bajada-Setup.exe** desde [Releases](https://github.com/luizgnz/bajada/releases). Windows 10 (2004 o posterior) y Windows 11, de 64 bits.
 
-El instalador incluye Python, Qt, yt-dlp, FFmpeg, FFprobe y Deno: no hace falta instalar herramientas aparte. La versión de prueba no tiene firma digital; Windows puede mostrar «editor desconocido».
+El instalador incluye Python, Qt, yt-dlp, FFmpeg, FFprobe y Deno: no hace falta instalar herramientas aparte. Estos componentes son privados de Bajada y no se agregan a PATH: no aparecerán como comandos independientes en PowerShell. El descargador funciona dentro de `DescargaFacil.exe --engine`. La versión de prueba no tiene firma digital; Windows puede mostrar «editor desconocido» y Control Inteligente de Aplicaciones puede bloquearla. Las pruebas de GitHub no certifican que esa protección la acepte.
 
 El instalador crea `Videos\Bajada` dentro de tu carpeta de usuario y conserva esa carpeta al desinstalar. Si ejecutas la app sin instalador, la carpeta de destino se crea antes de iniciar la descarga. El botón **Abrir carpeta** también la crea si todavía no existe.
 
@@ -53,6 +53,6 @@ Python 3.12 o 3.13. Instala `requirements-lock.txt` y ejecuta `python main.py`. 
 
 Pruebas: `python -m pip install pytest` y `python -m pytest tests -q`. Son locales y no descargan videos reales.
 
-En Windows, `./build-windows.ps1` crea y prueba la app, descarga los componentes, compila el instalador con Inno Setup 6 y verifica una instalación silenciosa sin las herramientas del equipo en PATH. El mismo proceso se ejecuta en GitHub Actions. `--self-check` verifica componentes e inventario; `--smoke-test` abre una interfaz con cola temporal.
+En Windows, `./build-windows.ps1` crea y prueba la app, descarga los componentes, compila el instalador con Inno Setup 6 y verifica una instalación silenciosa sin las herramientas del equipo en PATH. GitHub Actions construye el instalador y lo prueba en Windows Server 2022, Server 2025 y Windows 11 ARM (ejecutable x64 mediante emulación). Las pruebas instaladas usan PATH sin herramientas externas, descargan un clip sintético por HTTP local y verifican el audio MP3 y video MP4 con FFprobe. También comprueban selección y búsqueda durante la descarga, cancelación, errores de conversión, saltar archivos existentes, actualización, reparación y conservación de descargas al desinstalar. La prueba adicional de YouTube informa por separado si el servicio rechaza las direcciones de los servidores de GitHub. `--self-check` verifica componentes e inventario; `--smoke-test` abre una interfaz con cola temporal.
 
 Los componentes tienen sus propias licencias; consulta [THIRD-PARTY.md](THIRD-PARTY.md). El código de Bajada se publica bajo MIT. Utiliza la aplicación para contenido que tengas autorización para descargar.

@@ -1,7 +1,7 @@
 [Setup]
 AppId={{4900C11D-9D5F-45B0-9B2F-897E744C03C2}
 AppName=Bajada
-AppVersion=0.7.0
+AppVersion=0.7.1
 DefaultDirName={localappdata}\Programs\DescargaFacil
 DefaultGroupName=Bajada
 PrivilegesRequired=lowest
