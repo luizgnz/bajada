@@ -18,8 +18,8 @@ if '--self-check' in sys.argv:
     raise SystemExit(0 if all(v == 'OK' for v in report.values()) else 1)
 
 if getattr(sys, 'frozen', False) and sys.platform == 'win32':
-    import ctypes
-    ctypes.windll.kernel32.FreeConsole()
+    from windows_runtime import detach_console
+    detach_console()
 
 import json
 import os
