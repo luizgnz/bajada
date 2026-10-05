@@ -46,7 +46,7 @@ if ($LASTEXITCODE -ne 0) { throw 'No se pudieron preparar los avisos de los comp
 if ($LASTEXITCODE -ne 0) { throw 'No se pudo crear la aplicación.' }
 & $Python create-manifest.py dist/DescargaFacil/_internal
 if ($LASTEXITCODE -ne 0) { throw 'No se pudo preparar la comprobación de componentes.' }
-& (Join-Path $PSScriptRoot 'validate-windows.ps1') -AppDirectory (Join-Path $PSScriptRoot 'dist\DescargaFacil')
+& (Join-Path $PSScriptRoot 'validate-windows.ps1') -AppDirectory (Join-Path $PSScriptRoot 'dist\DescargaFacil') -ReportDirectory (Join-Path $PSScriptRoot 'build-tools\validation-packaged')
 # Windows executable has a console subsystem so the download child can emit progress.
 # The graphical parent detaches its console in main.py; children retain redirected output.
 $Compiler = Get-Command ISCC.exe -ErrorAction SilentlyContinue
@@ -60,7 +60,7 @@ $TestInstall = Join-Path $PSScriptRoot 'build-tools\installed-test'
 $Installer = Join-Path $PSScriptRoot 'dist\installer\Bajada-Setup.exe'
 $InstallCheck = Start-Process -FilePath $Installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=""', "/DIR=`"$TestInstall`"") -Wait -PassThru
 if ($InstallCheck.ExitCode -ne 0) { throw 'Falló la instalación de prueba.' }
-& (Join-Path $PSScriptRoot 'validate-windows.ps1') -AppDirectory $TestInstall
+& (Join-Path $PSScriptRoot 'validate-windows.ps1') -AppDirectory $TestInstall -ReportDirectory (Join-Path $PSScriptRoot 'build-tools\validation-installed')
 Write-Host 'Instalador listo en dist/installer/Bajada-Setup.exe'
 
 $Digest = (Get-FileHash $Installer -Algorithm SHA256).Hash.ToLower()

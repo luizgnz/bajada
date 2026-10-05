@@ -674,3 +674,19 @@ def test_header_clicks_toggle_applied_order(app, tmp_path):
     QTest.mouseClick(header.viewport(), Qt.LeftButton, pos=point)
     assert window.table.item(0,2).text()=='Árbol'
     window.close()
+
+
+def test_windows_launch_error_explains_embedded_components(app, monkeypatch):
+    error = OSError('Solicitud no compatible')
+    error.winerror = 50
+    def failed_launch(*args, **kwargs):
+        raise error
+    monkeypatch.setattr(main.subprocess, 'Popen', failed_launch)
+    worker = Engine([])
+    errors = []
+    worker.problem.connect(errors.append)
+    worker.start()
+    wait_for(app, lambda: not worker.isRunning())
+    assert len(errors) == 1
+    assert 'Windows' in errors[0] and 'Reinstala' in errors[0]
+    assert 'No hace falta instalar yt-dlp ni FFmpeg por separado' in errors[0]

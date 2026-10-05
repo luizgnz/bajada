@@ -28,8 +28,8 @@ jobs:
         with:
           name: build-validation
           path: |
-            dist/DescargaFacil/validation/*
-            build-tools/installed-test/validation/*
+            build-tools/validation-packaged/*
+            build-tools/validation-installed/*
   installed:
     needs: build
     strategy:
